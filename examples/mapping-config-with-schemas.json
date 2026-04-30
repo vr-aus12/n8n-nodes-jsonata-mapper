@@ -1,0 +1,54 @@
+{
+  "version": "1.1",
+  "engine": "jsonata",
+  "validation": {
+    "sourceSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "required": ["customer", "order"],
+      "properties": {
+        "customer": {
+          "type": "object",
+          "required": ["firstName", "email"],
+          "properties": {
+            "firstName": { "type": "string" },
+            "lastName": { "type": "string" },
+            "email": { "type": "string" }
+          }
+        },
+        "order": {
+          "type": "object",
+          "required": ["total"],
+          "properties": {
+            "total": { "type": "string" }
+          }
+        }
+      }
+    },
+    "targetSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "required": ["contact", "purchase"],
+      "properties": {
+        "contact": {
+          "type": "object",
+          "required": ["email"],
+          "properties": {
+            "email": { "type": "string", "format": "email" }
+          }
+        },
+        "purchase": {
+          "type": "object",
+          "required": ["amount"],
+          "properties": {
+            "amount": { "type": "number" }
+          }
+        }
+      }
+    }
+  },
+  "mappings": [
+    { "target": "contact.email", "expression": "$lowercase($trim(customer.email))", "required": true },
+    { "target": "purchase.amount", "expression": "$number(order.total)", "required": true }
+  ]
+}

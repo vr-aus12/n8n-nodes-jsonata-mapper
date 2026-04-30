@@ -1,0 +1,10 @@
+{
+  "customer": {
+    "firstName": "John",
+    "lastName": "Smith",
+    "email": " JOHN.SMITH@EXAMPLE.COM "
+  },
+  "order": {
+    "total": "245.5"
+  }
+}

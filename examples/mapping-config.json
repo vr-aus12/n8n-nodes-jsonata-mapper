@@ -1,0 +1,10 @@
+{
+  "version": "1.1",
+  "engine": "jsonata",
+  "mappings": [
+    { "target": "person.givenName", "expression": "customer.firstName", "required": true },
+    { "target": "person.familyName", "expression": "customer.lastName", "required": true },
+    { "target": "contact.email", "expression": "$lowercase($trim(customer.email))", "required": true },
+    { "target": "purchase.amount", "expression": "$number(order.total)" }
+  ]
+}
