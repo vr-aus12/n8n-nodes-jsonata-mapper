@@ -29,27 +29,22 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
-          registry-url: https://registry.npmjs.org/
-          cache: pnpm
+          node-version: 'lts/*'
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm ci
 
-      - name: Lint
-        run: pnpm run lint
-
-      - name: Test
-        run: pnpm run test:all
-
-      - name: Pack dry run
-        run: pnpm run pack:dry-run
-
-      - name: Configure npm token
-        if: env.NPM_TOKEN != ''
-        run: npm config set //registry.npmjs.org/:_authToken=${NPM_TOKEN}
-
-      - name: Publish to npm with provenance
-        run: npm publish --provenance
+      - name: Release
+        # Publishes to npm with a provenance attestation (requires id-token: write above).
+        # Lint and build run automatically as part of the release process.
+        #
+        # Option A (OIDC): leave NPM_TOKEN unset — the token step is skipped and
+        #   npm uses the OIDC exchange instead.
+        # Option B (token): set NPM_TOKEN in repo secrets — it is written to
+        #   .npmrc here before publishing.
+        run: |
+          [ -n "$NPM_TOKEN" ] && pnpm config set //registry.npmjs.org/:_authToken "$NPM_TOKEN"
+          pnpm run release
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
