@@ -18,8 +18,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@v6
+        name: Install pnpm
         with:
           node-version: 'lts/*'
           cache: 'pnpm'
