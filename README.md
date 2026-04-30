@@ -504,6 +504,22 @@ Model: llama3.1
 
 When using Docker, `host.docker.internal` is usually required to reach Ollama running on the host machine.
 
+
+
+### Gemini Direct API Notes
+
+For Google Gemini direct API, use:
+
+```text
+LLM Provider: Google Gemini Generate Content API
+Base URL: https://generativelanguage.googleapis.com/v1beta
+Model: gemini-2.5-flash
+```
+
+Do not put `/models/...:generateContent` in the Base URL. The node builds that endpoint automatically. If you paste a full Gemini endpoint or `models/<model>` into the model field, the node normalizes it before calling Gemini.
+
+Recommended Gemini models for new projects include `gemini-2.5-flash` and `gemini-2.5-flash-lite`. Older 1.5 model aliases may return 404 depending on API access and lifecycle.
+
 ## Operations
 
 | Operation | Description |
@@ -707,3 +723,44 @@ npm run release
 ```
 
 This package does not require `@n8n/node-cli` for normal npm publishing.
+
+
+## Troubleshooting
+
+### Error: Bad escaped character in JSON
+
+If n8n shows this error while installing or loading the community node:
+
+```text
+Error loading package "n8n-nodes-jsonata-mapper":
+Bad escaped character in JSON at position 11 (line 2 column 10)
+```
+
+This usually means one JSON parameter default in the published node package is being parsed by n8n and contains bad escaping.
+
+This package avoids that issue by generating all JSON parameter defaults using `JSON.stringify(...)` constants instead of manually escaped JSON strings.
+
+The package also includes a test to validate all node JSON defaults before publishing:
+
+```bash
+pnpm run test:json-defaults
+```
+
+Before publishing, run:
+
+```bash
+pnpm run test:all
+npm pack --dry-run
+```
+
+### Gemini returns 404 during AI mapping
+
+Use these settings for the direct Gemini API:
+
+```text
+LLM Provider: Google Gemini Generate Content API
+Base URL: https://generativelanguage.googleapis.com/v1beta
+AI Model: gemini-2.5-flash
+```
+
+Do not include `/models/...` in the Base URL. The node builds the full Gemini endpoint internally.

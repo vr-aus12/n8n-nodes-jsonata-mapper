@@ -1,17 +1,15 @@
 {
   "name": "n8n-nodes-jsonata-mapper",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "An n8n community node for JSON-to-JSON mapping, JSONata transformations, JSON Schema validation, and AI-assisted mapping generation.",
   "license": "MIT",
-  "homepage": "https://github.com/vr-aus12/n8n-nodes-jsonata-mapper",
-  "author": {
+  "homepage": "https://github.com/vr-aus12/n8n-nodes-jsonata-mapper#readme",
+    "author": {
     "name": "Venkata V",
     "email": "vvrr.17.4@gmail.com"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/vr-aus12/n8n-nodes-jsonata-mapper.git"
-  },
+  "repository": "git+https://github.com/vr-aus12/n8n-nodes-jsonata-mapper.git",
+  "bugs": "https://github.com/vr-aus12/n8n-nodes-jsonata-mapper/issues",
   "main": "dist/index.js",
   "packageManager": "pnpm@10.11.0",
   "scripts": {
@@ -20,7 +18,8 @@
     "lint": "n8n-node lint",
     "lint:fix": "n8n-node lint --fix",
     "test:mapper": "node tests/run-mapper-tests.js",
-    "test:all": "pnpm run build && pnpm run test:mapper",
+    "test:json-defaults": "node tests/validate-node-json-defaults.js",
+    "test:all": "pnpm run build && pnpm run test:mapper && pnpm run test:json-defaults",
     "pack:dry-run": "npm pack --dry-run",
     "release": "n8n-node release"
   },
