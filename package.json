@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-jsonata-mapper",
-  "version": "1.3.3",
+  "version": "1.3.4",
   "description": "An n8n community node for JSON-to-JSON mapping, JSONata transformations, JSON Schema validation, and AI-assisted mapping generation.",
   "license": "MIT",
   "homepage": "https://github.com/vr-aus12/n8n-nodes-jsonata-mapper#readme",
