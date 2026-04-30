@@ -565,8 +565,7 @@ This package uses current stable library versions in `package.json`:
 | `jsonata` | JSON expression and transformation engine |
 | `ajv` | JSON Schema validation |
 | `ajv-formats` | Email, date, URI and other JSON Schema format validation |
-| `lodash.get` | Reading nested source paths for incoming n8n items |
-| `lodash.set` | Writing nested target paths |
+| Built-in path helpers | Reading source paths and writing nested target paths without deprecated lodash helpers |
 
 The package currently targets JSONata 2.x and Ajv 8.x.
 
@@ -764,3 +763,8 @@ AI Model: gemini-2.5-flash
 ```
 
 Do not include `/models/...` in the Base URL. The node builds the full Gemini endpoint internally.
+
+
+## Dependency Notes
+
+This package does not use `lodash.get` or `lodash.set`. Nested source path reading and target path writing are handled by small internal helper functions, avoiding deprecated lodash helper packages.

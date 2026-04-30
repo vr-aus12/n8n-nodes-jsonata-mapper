@@ -9,8 +9,6 @@ import {
 	NodeOperationError,
 } from 'n8n-workflow';
 
-import get from 'lodash.get';
-import set from 'lodash.set';
 import jsonata from 'jsonata';
 import Ajv from 'ajv';
 import Ajv2020 from 'ajv/dist/2020';
@@ -701,6 +699,63 @@ export class JsonataMapper implements INodeType {
 	}
 }
 
+
+function pathToSegments(path: string): Array<string | number> {
+	const segments: Array<string | number> = [];
+	const pattern = /([^.[\]]+)|\[(\d+)\]/g;
+	let match: RegExpExecArray | null;
+
+	while ((match = pattern.exec(path)) !== null) {
+		if (match[1] !== undefined) {
+			segments.push(match[1]);
+		} else if (match[2] !== undefined) {
+			segments.push(Number(match[2]));
+		}
+	}
+
+	return segments;
+}
+
+function getByPath(source: unknown, path: string): unknown {
+	if (!path) return source;
+
+	let current: any = source;
+
+	for (const segment of pathToSegments(path)) {
+		if (current === null || current === undefined) {
+			return undefined;
+		}
+
+		current = current[segment as any];
+	}
+
+	return current;
+}
+
+function setByPath(target: Record<string, unknown>, path: string, value: unknown): void {
+	const segments = pathToSegments(path);
+	if (segments.length === 0) return;
+
+	let current: any = target;
+
+	for (let index = 0; index < segments.length; index++) {
+		const segment = segments[index] as any;
+		const isLast = index === segments.length - 1;
+		const nextSegment = segments[index + 1];
+
+		if (isLast) {
+			current[segment] = value;
+			return;
+		}
+
+		if (current[segment] === undefined || current[segment] === null || typeof current[segment] !== 'object') {
+			current[segment] = typeof nextSegment === 'number' ? [] : {};
+		}
+
+		current = current[segment];
+	}
+}
+
 function getSourceJson(
 	ctx: IExecuteFunctions,
 	itemIndex: number,
@@ -716,7 +771,7 @@ function getSourceJson(
 	}
 
 	const sourceField = ctx.getNodeParameter('sourceField', itemIndex) as string;
-	return sourceField === 'json' ? item.json : get(item.json, sourceField);
+	return sourceField === 'json' ? item.json : getByPath(item.json, sourceField);
 }
 
 function getSchemaContext(
@@ -822,7 +877,7 @@ export async function applyMappingConfig(
 			enableJavascriptTransforms,
 		);
 
-		set(output, rule.target, value);
+		setByPath(output, rule.target, value);
 
 		if (returnDebug) {
 			debug.push({
