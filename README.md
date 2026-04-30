@@ -768,3 +768,15 @@ Do not include `/models/...` in the Base URL. The node builds the full Gemini en
 ## Dependency Notes
 
 This package does not use `lodash.get` or `lodash.set`. Nested source path reading and target path writing are handled by small internal helper functions, avoiding deprecated lodash helper packages.
+
+## Compatibility
+
+This package is intended for self-hosted n8n community-node installations.
+
+It uses external runtime dependencies:
+
+- jsonata
+- ajv
+- ajv-formats
+
+Because of these dependencies, it is not currently n8n Cloud verified. Self-hosted n8n installations can install and use the package normally.
