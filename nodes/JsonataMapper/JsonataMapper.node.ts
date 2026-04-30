@@ -9,8 +9,6 @@ import {
 	NodeOperationError,
 } from 'n8n-workflow';
 
-import get from 'lodash.get';
-import set from 'lodash.set';
 import jsonata from 'jsonata';
 import Ajv from 'ajv';
 import Ajv2020 from 'ajv/dist/2020';
@@ -76,6 +74,50 @@ type GenericLlmCredentials = {
 	authHeaderPrefix?: string;
 	extraHeaders?: string | Record<string, unknown>;
 };
+
+const DEFAULT_SOURCE_JSON_DOCUMENT = JSON.stringify(
+	{
+		customer: {
+			firstName: 'John',
+			lastName: 'Smith',
+			email: ' JOHN.SMITH@EXAMPLE.COM ',
+		},
+		order: {
+			total: '245.5',
+		},
+	},
+	null,
+	2,
+);
+
+const DEFAULT_TARGET_SAMPLE_JSON = JSON.stringify(
+	{
+		person: {
+			givenName: '',
+			familyName: '',
+		},
+		contact: {
+			email: '',
+		},
+		purchase: {
+			amount: 0,
+		},
+	},
+	null,
+	2,
+);
+
+const DEFAULT_MAPPING_CONFIG = JSON.stringify(
+	{
+		version: '1.1',
+		engine: 'jsonata',
+		mappings: [],
+	},
+	null,
+	2,
+);
+
+const DEFAULT_EMPTY_JSON_OBJECT = '{}';
 
 export class JsonataMapper implements INodeType {
 	description: INodeTypeDescription = {
@@ -174,8 +216,7 @@ export class JsonataMapper implements INodeType {
 				displayName: 'Source JSON Document',
 				name: 'sourceJsonDocument',
 				type: 'json',
-				default:
-					'{\n  "customer": {\n    "firstName": "John",\n    "lastName": "Smith",\n    "email": " JOHN.SMITH@EXAMPLE.COM "\n  },\n  "order": {\n    "total": "245.5"\n  }\n}',
+				default: DEFAULT_SOURCE_JSON_DOCUMENT,
 				description:
 					'A pasted source JSON document. Useful for design-time mapping and AI auto-map.',
 				displayOptions: {
@@ -196,7 +237,7 @@ export class JsonataMapper implements INodeType {
 				displayName: 'Source JSON Schema',
 				name: 'sourceJsonSchema',
 				type: 'json',
-				default: '{}',
+				default: DEFAULT_EMPTY_JSON_OBJECT,
 				description:
 					'JSON Schema describing the source document. If enabled, this must be a meaningful schema with validation rules. Draft-07 and Draft 2020-12 are supported.',
 				displayOptions: {
@@ -217,7 +258,7 @@ export class JsonataMapper implements INodeType {
 				displayName: 'Target JSON Schema',
 				name: 'targetJsonSchema',
 				type: 'json',
-				default: '{}',
+				default: DEFAULT_EMPTY_JSON_OBJECT,
 				description:
 					'JSON Schema describing the required target document. If enabled, this must be a meaningful schema with validation rules. Draft-07 and Draft 2020-12 are supported.',
 				displayOptions: {
@@ -230,8 +271,7 @@ export class JsonataMapper implements INodeType {
 				displayName: 'Target Sample JSON',
 				name: 'targetSampleJson',
 				type: 'json',
-				default:
-					'{\n  "person": {\n    "givenName": "",\n    "familyName": ""\n  },\n  "contact": {\n    "email": ""\n  }\n}',
+				default: DEFAULT_TARGET_SAMPLE_JSON,
 				description:
 					'Sample target JSON. Used when no target schema is supplied, and as additional AI context.',
 				displayOptions: {
@@ -244,8 +284,7 @@ export class JsonataMapper implements INodeType {
 				displayName: 'Mapping Config',
 				name: 'mappingConfig',
 				type: 'json',
-				default:
-					'{\n  "version": "1.1",\n  "engine": "jsonata",\n  "mappings": []\n}',
+				default: DEFAULT_MAPPING_CONFIG,
 				description:
 					'JSONata mapping configuration. Each mapping uses a target path and a JSONata expression.',
 				displayOptions: {
@@ -317,7 +356,7 @@ export class JsonataMapper implements INodeType {
 				name: 'aiModel',
 				type: 'string',
 				default: 'gpt-4.1-mini',
-				description: 'Model name, for example gpt-4.1-mini, claude-3-5-sonnet-latest, gemini-1.5-flash, or llama3.1',
+				description: 'Model name. For Gemini use gemini-2.5-flash or gemini-2.5-flash-lite. For OpenAI-compatible providers use the provider model ID.',
 				displayOptions: {
 					show: {
 						operation: ['generateAiMapping'],
@@ -422,14 +461,30 @@ export class JsonataMapper implements INodeType {
 						customHttpPath,
 					});
 
-					// eslint-disable-next-line @n8n/community-nodes/no-http-request-with-manual-auth
-					const llmResponse = await this.helpers.httpRequest({
-						method: 'POST',
-						url: request.url,
-						headers: request.headers,
-						body: request.body,
-						json: true,
-					});
+					let llmResponse: unknown;
+
+					try {
+						// eslint-disable-next-line @n8n/community-nodes/no-http-request-with-manual-auth
+						llmResponse = await this.helpers.httpRequest({
+							method: 'POST',
+							url: request.url,
+							headers: request.headers,
+							body: request.body,
+							json: true,
+						});
+					} catch (error) {
+						const e = error as { message?: string; response?: { statusCode?: number; status?: number; body?: unknown; data?: unknown } };
+						const status = e.response?.statusCode ?? e.response?.status;
+						const responseBody = e.response?.body ?? e.response?.data;
+						throw new NodeOperationError(
+							this.getNode(),
+							`LLM request failed for provider ${llmProvider}${status ? ` with status ${status}` : ''}. ` +
+								`URL: ${redactApiKeyFromUrl(request.url)}. ` +
+								`Message: ${e.message ?? 'Unknown error'}. ` +
+								`${responseBody ? `Response: ${JSON.stringify(responseBody)}` : ''}`,
+							{ itemIndex },
+						);
+					}
 
 					const content = extractLlmText(llmProvider, llmResponse);
 
@@ -644,6 +699,63 @@ export class JsonataMapper implements INodeType {
 	}
 }
 
+
+function pathToSegments(path: string): Array<string | number> {
+	const segments: Array<string | number> = [];
+	const pattern = /([^.[\]]+)|\[(\d+)\]/g;
+	let match: RegExpExecArray | null;
+
+	while ((match = pattern.exec(path)) !== null) {
+		if (match[1] !== undefined) {
+			segments.push(match[1]);
+		} else if (match[2] !== undefined) {
+			segments.push(Number(match[2]));
+		}
+	}
+
+	return segments;
+}
+
+function getByPath(source: unknown, path: string): unknown {
+	if (!path) return source;
+
+	let current: any = source;
+
+	for (const segment of pathToSegments(path)) {
+		if (current === null || current === undefined) {
+			return undefined;
+		}
+
+		current = current[segment as any];
+	}
+
+	return current;
+}
+
+function setByPath(target: Record<string, unknown>, path: string, value: unknown): void {
+	const segments = pathToSegments(path);
+	if (segments.length === 0) return;
+
+	let current: any = target;
+
+	for (let index = 0; index < segments.length; index++) {
+		const segment = segments[index] as any;
+		const isLast = index === segments.length - 1;
+		const nextSegment = segments[index + 1];
+
+		if (isLast) {
+			current[segment] = value;
+			return;
+		}
+
+		if (current[segment] === undefined || current[segment] === null || typeof current[segment] !== 'object') {
+			current[segment] = typeof nextSegment === 'number' ? [] : {};
+		}
+
+		current = current[segment];
+	}
+}
+
 function getSourceJson(
 	ctx: IExecuteFunctions,
 	itemIndex: number,
@@ -659,7 +771,7 @@ function getSourceJson(
 	}
 
 	const sourceField = ctx.getNodeParameter('sourceField', itemIndex) as string;
-	return sourceField === 'json' ? item.json : get(item.json, sourceField);
+	return sourceField === 'json' ? item.json : getByPath(item.json, sourceField);
 }
 
 function getSchemaContext(
@@ -765,7 +877,7 @@ export async function applyMappingConfig(
 			enableJavascriptTransforms,
 		);
 
-		set(output, rule.target, value);
+		setByPath(output, rule.target, value);
 
 		if (returnDebug) {
 			debug.push({
@@ -1249,10 +1361,11 @@ function buildGenericLlmRequest(args: BuildLlmRequestArgs): BuiltLlmRequest {
 		}
 
 		case 'googleGemini': {
-			const googleBaseUrl = baseUrl || 'https://generativelanguage.googleapis.com/v1beta';
+			const googleBaseUrl = normalizeGeminiBaseUrl(baseUrl);
+			const geminiModel = normalizeGeminiModel(args.model);
 			const separator = apiKey ? '?key=' + encodeURIComponent(apiKey) : '';
 			return {
-				url: googleBaseUrl + '/models/' + encodeURIComponent(args.model) + ':generateContent' + separator,
+				url: googleBaseUrl + '/models/' + encodeURIComponent(geminiModel) + ':generateContent' + separator,
 				headers,
 				body: {
 					generationConfig: {
@@ -1363,6 +1476,36 @@ function parseLlmJsonContent<T>(content: string): T {
 
 function normalizeBaseUrl(value: unknown): string {
 	return String(value ?? '').trim().replace(/\/+$/, '');
+}
+
+
+function normalizeGeminiBaseUrl(value: unknown): string {
+	let baseUrl = normalizeBaseUrl(value) || 'https://generativelanguage.googleapis.com/v1beta';
+
+	// Users sometimes paste the full generateContent URL or a Base URL ending in /models.
+	baseUrl = baseUrl.replace(/\/models\/[^/]+:generateContent(?:\?.*)?$/i, '');
+	baseUrl = baseUrl.replace(/\/models$/i, '');
+
+	return normalizeBaseUrl(baseUrl);
+}
+
+function normalizeGeminiModel(value: unknown): string {
+	let model = String(value ?? '').trim();
+
+	// Accept either "gemini-2.5-flash" or "models/gemini-2.5-flash".
+	model = model.replace(/^models\//i, '');
+
+	// If a full Gemini URL is accidentally pasted into the model field, extract the model id.
+	const match = model.match(/\/models\/([^/:?]+):generateContent/i);
+	if (match?.[1]) {
+		model = match[1];
+	}
+
+	return model || 'gemini-2.5-flash';
+}
+
+function redactApiKeyFromUrl(url: string): string {
+	return url.replace(/([?&]key=)[^&]+/i, '$1***');
 }
 
 function parseExtraHeaders(value: unknown): Record<string, string> {
