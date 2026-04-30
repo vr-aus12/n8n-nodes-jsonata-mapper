@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["person", "contact", "purchase"],
+  "properties": {
+    "person": {
+      "type": "object",
+      "required": ["givenName", "familyName"],
+      "properties": {
+        "givenName": { "type": "string" },
+        "familyName": { "type": "string" }
+      }
+    },
+    "contact": {
+      "type": "object",
+      "required": ["email"],
+      "properties": {
+        "email": { "type": "string", "format": "email" }
+      }
+    },
+    "purchase": {
+      "type": "object",
+      "required": ["amount"],
+      "properties": {
+        "amount": { "type": "number" }
+      }
+    }
+  }
+}

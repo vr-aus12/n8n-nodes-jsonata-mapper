@@ -1,52 +1,73 @@
 {
-	"name": "n8n-nodes-<...>",
-	"version": "0.1.0",
-	"description": "",
-	"license": "MIT",
-	"homepage": "",
-	"keywords": [
-		"n8n-community-node-package"
-	],
-	"author": {
-		"name": "",
-		"email": ""
-	},
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/<...>/n8n-nodes-<...>.git"
-	},
-	"scripts": {
-		"build": "n8n-node build",
-		"build:watch": "tsc --watch",
-		"dev": "n8n-node dev",
-		"lint": "n8n-node lint",
-		"lint:fix": "n8n-node lint --fix",
-		"release": "n8n-node release",
-		"prepublishOnly": "n8n-node prerelease"
-	},
-	"files": [
-		"dist"
-	],
-	"n8n": {
-		"n8nNodesApiVersion": 1,
-		"strict": true,
-		"credentials": [
-			"dist/credentials/GithubIssuesApi.credentials.js",
-			"dist/credentials/GithubIssuesOAuth2Api.credentials.js"
-		],
-		"nodes": [
-			"dist/nodes/GithubIssues/GithubIssues.node.js",
-			"dist/nodes/Example/Example.node.js"
-		]
-	},
-	"devDependencies": {
-		"@n8n/node-cli": "*",
-		"eslint": "9.39.4",
-		"prettier": "3.8.3",
-		"release-it": "20.0.1",
-		"typescript": "5.9.3"
-	},
-	"peerDependencies": {
-		"n8n-workflow": "*"
-	}
+  "name": "n8n-nodes-jsonata-mapper",
+  "version": "1.0.1",
+  "description": "An n8n community node for JSON-to-JSON mapping, JSONata transformations, JSON Schema validation, and AI-assisted mapping generation.",
+  "license": "MIT",
+  "homepage": "https://github.com/vr-aus12/n8n-nodes-jsonata-mapper",
+  "author": {
+    "name": "Venkata V",
+    "email": "vvrr.17.4@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vr-aus12/n8n-nodes-jsonata-mapper.git"
+  },
+  "main": "dist/index.js",
+  "packageManager": "pnpm@10.11.0",
+  "scripts": {
+    "build": "tsc && node scripts/copy-assets.js",
+    "dev": "tsc --watch",
+    "lint": "n8n-node lint",
+    "lint:fix": "n8n-node lint --fix",
+    "test:mapper": "node tests/run-mapper-tests.js",
+    "test:all": "pnpm run build && pnpm run test:mapper",
+    "pack:dry-run": "npm pack --dry-run",
+    "release": "n8n-node release"
+  },
+  "keywords": [
+    "n8n-community-node-package",
+    "n8n",
+    "jsonata",
+    "json",
+    "json-schema",
+    "mapping",
+    "transformation",
+    "data-mapping",
+    "llm",
+    "ai"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "examples",
+    "tests"
+  ],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "aiNodeSdkVersion": 1,
+    "strict": false,
+    "nodes": [
+      "dist/nodes/JsonataMapper/JsonataMapper.node.js"
+    ],
+    "credentials": [
+      "dist/credentials/GenericLlmApi.credentials.js"
+    ]
+  },
+  "dependencies": {
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "jsonata": "^2.1.0",
+    "lodash.get": "^4.4.2",
+    "lodash.set": "^4.3.2"
+  },
+  "devDependencies": {
+    "@n8n/node-cli": "^0.28.0",
+    "@types/lodash.get": "^4.4.9",
+    "@types/lodash.set": "^4.3.9",
+    "@types/node": "^22.15.3",
+    "release-it": "^19.0.4",
+    "typescript": "^5.8.3",
+    "n8n-workflow": "^2.16.0"
+  }
 }
