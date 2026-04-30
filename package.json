@@ -1,10 +1,10 @@
 {
   "name": "n8n-nodes-jsonata-mapper",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "An n8n community node for JSON-to-JSON mapping, JSONata transformations, JSON Schema validation, and AI-assisted mapping generation.",
   "license": "MIT",
   "homepage": "https://github.com/vr-aus12/n8n-nodes-jsonata-mapper#readme",
-    "author": {
+  "author": {
     "name": "Venkata V",
     "email": "vvrr.17.4@gmail.com"
   },
