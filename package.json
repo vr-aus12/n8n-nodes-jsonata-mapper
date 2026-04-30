@@ -59,10 +59,14 @@
     "jsonata": "^2.1.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.4",
     "@n8n/node-cli": "^0.28.0",
     "@types/node": "^22.15.3",
+    "eslint": "^9.39.4",
+    "globals": "^17.5.0",
+    "n8n-workflow": "^2.16.0",
     "release-it": "^19.0.4",
     "typescript": "^5.8.3",
-    "n8n-workflow": "^2.16.0"
+    "typescript-eslint": "^8.59.1"
   }
 }
