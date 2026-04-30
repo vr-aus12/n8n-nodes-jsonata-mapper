@@ -83,7 +83,7 @@ jobs:
           cache: true
 
       - name: Install dependencies
-        run: pnpm ci
+        run: pnpm install
 
       - name: Release
         # Publishes to npm with a provenance attestation (requires id-token: write above).
